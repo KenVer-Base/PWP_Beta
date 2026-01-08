@@ -15,7 +15,7 @@
                     <div class="text-accent fs-5">
                         <label style="cursor: pointer;" class="p-2 rounded-circle hover-bg">
                             <i class="bi bi-image"></i>
-                            <input type="file" name="file" class="d-none">
+                            <input type="file" name="files[]" class="d-none" multiple>
                         </label>
                     </div>
                     <button type="submit" class="btn-primary-custom py-2 px-4 w-auto fs-6 mt-0 shadow-none">Kirim</button>
@@ -28,7 +28,7 @@
 {% for post in posts %}
 <div class="post-card d-flex gap-3">
     <a href="{{ url_for('main.profile', username=post[4]) }}" class="flex-shrink-0">
-        <img src="{{ url_for('static', filename='uploads/' + (post[9] if post[9] else 'default.png')) }}" 
+        <img src="{{ url_for('static', filename='uploads/' + (post[5] if post[5] else 'default.png')) }}" 
              class="avatar"
              onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ post[4] }}&background=random&color=fff&size=128';">
     </a>
@@ -36,33 +36,37 @@
         <div class="d-flex justify-content-between align-items-start mb-2">
             <div>
                 <a href="{{ url_for('main.profile', username=post[4]) }}" class="fw-bold text-accent text-decoration-none">{{ post[4] }}</a>
-                <div class="text-muted small" style="font-size: 0.8rem;">{{ post[8] }}</div>
+                <div class="text-muted small" style="font-size: 0.8rem;">{{ post[3] }}</div>
             </div>
-            {% if post[7] == session['id'] %}
+            {% if post[2] == session['id'] %}
                 <a href="{{ url_for('main.delete_post', post_id=post[0]) }}" class="btn btn-sm btn-outline-danger border-0 rounded-circle" onclick="return confirm('Hapus?')"><i class="bi bi-trash"></i></a>
             {% endif %}
         </div>
+        
         <p class="mb-3" style="white-space: pre-wrap;">{{ post[1] }}</p>
-        {% if post[3] == 'foto' %}
-            <div class="mb-3">
-                <img src="{{ url_for('static', filename='uploads/' + post[2]) }}" class="img-fluid rounded-4 w-100 border border-secondary border-opacity-25">
-            </div>
-        {% elif post[3] == 'video' %}
-            <div class="mb-3">
-                <video controls class="w-100 rounded-4 border border-secondary border-opacity-25"><source src="{{ url_for('static', filename='uploads/' + post[2]) }}" type="video/mp4"></video>
+
+        {% if post[9] %}
+            {% set count = post[9]|length %}
+            <div class="media-grid count-{{ 4 if count >= 4 else count }}">
+                {% for file in post[9] %}
+                    {% if loop.index <= 4 %}
+                    <div class="media-item">
+                        {% if file[1] == 'foto' %}
+                            <img src="{{ url_for('static', filename='uploads/' + file[0]) }}" onclick="openLightbox(this.src)">
+                        {% else %}
+                            <video src="{{ url_for('static', filename='uploads/' + file[0]) }}" controls></video>
+                        {% endif %}
+                        {% if loop.index == 4 and count > 4 %}
+                            <div class="more-overlay">+{{ count - 3 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
             </div>
         {% endif %}
         
-        <div class="d-flex gap-4 pt-2 border-top border-secondary border-opacity-10">
-            <a href="#" onclick="toggleLike(event, {{ post[0] }})" class="d-flex align-items-center gap-2 text-muted text-decoration-none btn btn-sm p-0">
-                <i id="icon-like-{{ post[0] }}" class="bi bi-heart-fill {{ 'text-danger' if post[10] else '' }}"></i> 
-                <span id="count-like-{{ post[0] }}">{{ post[5] }} Dukungan</span>
-            </a>
-            
-            <a href="{{ url_for('main.comment_post', post_id=post[0]) }}" class="d-flex align-items-center gap-2 text-decoration-none btn btn-sm p-0" style="color: var(--text-main);">
-                <i class="bi bi-chat fs-6"></i> <span>{{ post[6] }} Komentar</span>
-            </a>
-        </div>
+        {% include 'includes/post_actions.html' %}
+
     </div>
 </div>
 {% else %}

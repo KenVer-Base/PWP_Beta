@@ -1,0 +1,10 @@
+<div class="d-flex gap-4 pt-2 border-top border-secondary border-opacity-10">
+    <a href="#" onclick="toggleLike(event, {{ post[0] }})" class="d-flex align-items-center gap-2 text-muted text-decoration-none btn btn-sm p-0">
+        <i id="icon-like-{{ post[0] }}" class="bi bi-heart-fill {{ 'text-danger' if post[8] else '' }}"></i> 
+        <span id="count-like-{{ post[0] }}">{{ post[6] }} Dukungan</span>
+    </a>
+    
+    <a href="{{ url_for('main.comment_post', post_id=post[0]) }}" class="d-flex align-items-center gap-2 text-decoration-none btn btn-sm p-0" style="color: var(--text-main);">
+        <i class="bi bi-chat fs-6"></i> <span>{{ post[7] }} Komentar</span>
+    </a>
+</div>

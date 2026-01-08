@@ -7,40 +7,85 @@ import os
 
 main = Blueprint('main', __name__)
 
-# --- Helper Lokal ---
-def add_notification(user_id, message):
+def add_notification(user_id, message, type='like', target_id=0):
     cur = mysql.connection.cursor()
-    cur.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (user_id, message))
+    cur.execute("INSERT INTO notifications (user_id, message, type, target_id) VALUES (%s, %s, %s, %s)", 
+                (user_id, message, type, target_id))
     mysql.connection.commit()
     cur.close()
 
-# --- ROUTES ---
+def get_posts_with_files(cursor, specific_user_id=None):
+    query = """
+        SELECT p.id, p.caption, p.user_id, p.created_at, 
+               u.username, u.profile_pic,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
+               (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id AND user_id = %s) as is_liked
+        FROM posts p 
+        JOIN users u ON p.user_id = u.id
+    """
+    params = [session['id']]
+    
+    if specific_user_id:
+        query += " WHERE p.user_id = %s"
+        params.append(specific_user_id)
+        
+    query += " ORDER BY p.created_at DESC"
+    
+    cursor.execute(query, params)
+    raw_posts = cursor.fetchall()
+    
+    final_posts = []
+    
+    for post in raw_posts:
+        p_list = list(post) 
+        post_id = p_list[0]
+        
+        cursor.execute("SELECT file_path, file_type FROM post_files WHERE post_id = %s", [post_id])
+        files = cursor.fetchall() 
+        
+        p_list.append(files) 
+        
+        final_posts.append(p_list)
+        
+    return final_posts
+
+# ---------------------------------------------------
+
 @main.route('/', methods=['GET', 'POST'])
 def index():
     if 'loggedin' not in session: return redirect(url_for('auth.login'))
     cur = mysql.connection.cursor()
 
-    if request.method == 'POST' and 'caption' in request.form:
-         pass 
-    cur.execute("""
-        SELECT p.id, p.caption, p.file_path, p.file_type, u.username, 
-        (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
-        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count,
-        p.user_id, p.created_at, u.profile_pic,
-        (SELECT COUNT(*) FROM likes WHERE post_id = p.id AND user_id = %s) as is_liked
-        FROM posts p JOIN users u ON p.user_id = u.id
-        ORDER BY p.created_at DESC
-    """, [session['id']]) 
-    
-    posts = cur.fetchall()
+    if request.method == 'POST':
+        if 'caption' in request.form:
+            caption = request.form['caption']
+            files = request.files.getlist('files[]') 
+            
+            cur.execute("INSERT INTO posts (user_id, caption) VALUES (%s, %s)", (session['id'], caption))
+            post_id = cur.lastrowid
+            
+            for file in files:
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(f"{session['id']}_{post_id}_{file.filename}")
+                    file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                    
+                    ext = filename.rsplit('.', 1)[1].lower()
+                    f_type = 'video' if ext in ['mp4', 'mkv', 'avi'] else 'foto'
+                    
+                    cur.execute("INSERT INTO post_files (post_id, file_path, file_type) VALUES (%s, %s, %s)", 
+                                (post_id, filename, f_type))
+            
+            mysql.connection.commit()
+            return redirect(url_for('main.index'))
+
+    posts = get_posts_with_files(cur)
 
     cur.execute("SELECT id, username, profile_pic FROM users WHERE id = %s", [session['id']])
     current_user = cur.fetchone()
 
     cur.close()
-    # UPDATE: Path file diarahkan ke folder 'main'
     return render_template('main/index.html', posts=posts, current_user=current_user)
-
 
 @main.route('/explore')
 def explore():
@@ -51,16 +96,20 @@ def explore():
     
     cur = mysql.connection.cursor()
     if query:
+        # Cari User
         cur.execute("SELECT id, username, profile_pic FROM users WHERE username LIKE %s", ('%' + query + '%',))
         users = cur.fetchall()
+        
+        # Cari Postingan (Perlu join post_files untuk ambil thumbnail gambar pertama)
         cur.execute("""
-            SELECT p.id, p.caption, p.file_path, p.file_type, u.username, p.created_at, u.profile_pic
+            SELECT p.id, p.caption, u.username, p.created_at, u.profile_pic,
+            (SELECT file_path FROM post_files WHERE post_id = p.id LIMIT 1) as thumbnail
             FROM posts p JOIN users u ON p.user_id = u.id 
             WHERE p.caption LIKE %s ORDER BY p.created_at DESC
         """, ('%' + query + '%',))
         posts = cur.fetchall()
+        
     cur.close()
-    # UPDATE: Path file diarahkan ke folder 'main'
     return render_template('main/explore.html', users=users, posts=posts, query=query)
 
 @main.route('/profile/<username>')
@@ -86,17 +135,9 @@ def profile(username):
         cur.execute("SELECT 1 FROM follows WHERE follower_id = %s AND followed_id = %s", (session['id'], user_id))
         if cur.fetchone(): is_following = True
 
-    cur.execute("""
-        SELECT p.id, p.caption, p.file_path, p.file_type, 
-        (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
-        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count,
-        p.created_at, u.profile_pic
-        FROM posts p JOIN users u ON p.user_id = u.id
-        WHERE p.user_id = %s ORDER BY p.created_at DESC
-    """, [user_id])
-    posts = cur.fetchall()
+    posts = get_posts_with_files(cur, specific_user_id=user_id)
+    
     cur.close()
-    # UPDATE: Path file diarahkan ke folder 'user'
     return render_template('user/profile.html', user=user, posts=posts, followers=followers, following=following, is_following=is_following)
 
 @main.route('/edit_profile', methods=['GET', 'POST'])
@@ -126,8 +167,7 @@ def edit_profile():
     cur.execute("SELECT bio FROM users WHERE id = %s", [session['id']])
     data = cur.fetchone()
     cur.close()
-    # UPDATE: Path file diarahkan ke folder 'user'
-    return render_template('user/edit_profile.html', bio=data[0])
+    return render_template('/user/edit_profile.html', bio=data[0])
 
 @main.route('/follow/<int:user_id>')
 def follow_user(user_id):
@@ -140,7 +180,8 @@ def follow_user(user_id):
         cur.execute("DELETE FROM follows WHERE follower_id = %s AND followed_id = %s", (session['id'], user_id))
     else:
         cur.execute("INSERT INTO follows (follower_id, followed_id) VALUES (%s, %s)", (session['id'], user_id))
-        add_notification(user_id, f"{session['username']} mulai mengikuti Anda.")
+        # Notif Follow: target_id = session['id'] (agar link ke profil pengikut)
+        add_notification(user_id, f"{session['username']} mulai mengikuti Anda.", 'follow', session['id'])
     
     mysql.connection.commit()
     cur.execute("SELECT username FROM users WHERE id = %s", [user_id])
@@ -166,6 +207,12 @@ def like_post(post_id):
     else:
         cur.execute("INSERT INTO likes (user_id, post_id) VALUES (%s, %s)", (user_id, post_id))
         action = 'liked'
+        
+        # Notif Like
+        cur.execute("SELECT user_id FROM posts WHERE id = %s", [post_id])
+        post_owner = cur.fetchone()
+        if post_owner and post_owner[0] != user_id:
+            add_notification(post_owner[0], f"{session['username']} menyukai postingan Anda.", 'like', post_id)
 
     mysql.connection.commit()
     
@@ -189,18 +236,24 @@ def comment_post(post_id):
         cur.execute("INSERT INTO comments (user_id, post_id, content) VALUES (%s, %s, %s)", 
                     (session['id'], post_id, content))
         
-        # Notif Logic
         cur.execute("SELECT user_id FROM posts WHERE id = %s", [post_id])
-        owner = cur.fetchone()[0]
-        if owner != session['id']:
-            add_notification(owner, f"{session['username']} mengomentari postingan Anda.")
+        owner_data = cur.fetchone()
+        if owner_data:
+            owner = owner_data[0]
+            if owner != session['id']:
+                add_notification(owner, f"{session['username']} mengomentari postingan Anda.", 'comment', post_id)
         
         mysql.connection.commit()
         return redirect(url_for('main.comment_post', post_id=post_id)) 
 
-    # ... (Bagian GET / Tampilan Komentar tetap sama) ...
+    # Cek Postingan
     cur.execute("SELECT caption FROM posts WHERE id = %s", [post_id])
     post = cur.fetchone()
+    
+    if not post:
+        flash('Postingan tidak ditemukan.', 'danger')
+        return redirect(url_for('main.index'))
+
     cur.execute("""
         SELECT c.content, u.username, c.created_at, u.profile_pic 
         FROM comments c JOIN users u ON c.user_id = u.id 
@@ -208,23 +261,27 @@ def comment_post(post_id):
     """, [post_id])
     comments = cur.fetchall()
     cur.close()
-    
-    # UPDATE: Menggunakan path 'includes' sesuai rencana kita sebelumnya.
-    # Catatan: Jika ini halaman full page, pertimbangkan pindahkan ke folder 'main' nanti.
     return render_template('includes/comment.html', comments=comments, post_id=post_id, caption=post[0])
 
 @main.route('/delete_post/<int:post_id>')
 def delete_post(post_id):
     if 'loggedin' not in session: return redirect(url_for('auth.login'))
     cur = mysql.connection.cursor()
-    cur.execute("SELECT user_id, file_path FROM posts WHERE id = %s", [post_id])
+    
+    cur.execute("SELECT user_id FROM posts WHERE id = %s", [post_id])
     post = cur.fetchone()
+    
     if post and post[0] == session['id']:
-        if post[1]:
-            try: os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], post[1]))
+        cur.execute("SELECT file_path FROM post_files WHERE post_id = %s", [post_id])
+        files = cur.fetchall()
+        
+        for f in files:
+            try: os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], f[0]))
             except: pass
+            
         cur.execute("DELETE FROM posts WHERE id = %s", [post_id])
         mysql.connection.commit()
+        
     cur.close()
     return redirect(url_for('main.index'))
 
@@ -235,7 +292,6 @@ def chat_list():
     cur.execute("SELECT id, username, profile_pic FROM users WHERE id != %s", [session['id']])
     users = cur.fetchall()
     cur.close()
-    # UPDATE: Path file diarahkan ke folder 'chat'
     return render_template('chat/chat_list.html', users=users)
 
 @main.route('/chat/<int:friend_id>')
@@ -254,10 +310,8 @@ def chat_room(friend_id):
     messages = cur.fetchall()
     cur.close()
     room = f"room_{min(session['id'], friend_id)}_{max(session['id'], friend_id)}"
-    # UPDATE: Path file diarahkan ke folder 'chat'
     return render_template('chat/chat_room.html', messages=messages, friend=friend, friend_id=friend_id, room=room)
 
-# --- SOCKET IO EVENTS ---
 @socketio.on('join')
 def on_join(data):
     join_room(data['room'])
@@ -277,10 +331,11 @@ def notifications():
     cur = mysql.connection.cursor()
 
     cur.execute("""
-        SELECT message, created_at, is_read 
-        FROM notifications 
-        WHERE user_id = %s 
-        ORDER BY created_at DESC
+        SELECT n.message, n.created_at, n.is_read, n.type, n.target_id, u.username
+        FROM notifications n
+        LEFT JOIN users u ON (n.type = 'follow' AND n.target_id = u.id)
+        WHERE n.user_id = %s 
+        ORDER BY n.created_at DESC
     """, [session['id']])
     notifs = cur.fetchall()
 
@@ -288,5 +343,4 @@ def notifications():
     mysql.connection.commit()
 
     cur.close()
-    # UPDATE: Path file diarahkan ke folder 'main'
     return render_template('main/notifications.html', notifications=notifs)

@@ -21,7 +21,7 @@ def login():
             return redirect(url_for('main.index'))
         else:
             flash('Email atau password salah.', 'danger')
-    return render_template('auth/login.html')
+    return render_template('auth/auth.html')
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
@@ -39,7 +39,7 @@ def register():
             flash('Username atau Email sudah digunakan.', 'danger')
         finally:
             cur.close()
-    return render_template('auth/register.html')
+    return render_template('auth/auth.html')
 
 @auth.route('/logout')
 def logout():

@@ -46,22 +46,31 @@
     <img src="{{ url_for('static', filename='uploads/' + (user[4] if user[4] else 'default.png')) }}" class="avatar" 
          onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ user[1] }}&background=random&color=fff&size=128';">
     <div class="w-100">
-        <div class="fw-bold text-accent">{{ user[1] }} <span class="text-muted fw-normal small">· {{ post[6] }}</span></div>
+        <div class="fw-bold text-accent">{{ user[1] }} <span class="text-muted fw-normal small">· {{ post[3] }}</span></div>
         <p class="mb-2">{{ post[1] }}</p>
-        {% if post[3] == 'foto' %}
-            <img src="{{ url_for('static', filename='uploads/' + post[2]) }}" class="img-fluid rounded-4 border w-100 border-secondary border-opacity-25">
-        {% elif post[3] == 'video' %}
-            <video controls class="w-100 rounded-4 border border-secondary border-opacity-25"><source src="{{ url_for('static', filename='uploads/' + post[2]) }}" type="video/mp4"></video>
+        
+        {% if post[9] %}
+            {% set count = post[9]|length %}
+            <div class="media-grid count-{{ 4 if count >= 4 else count }}">
+                {% for file in post[9] %}
+                    {% if loop.index <= 4 %}
+                    <div class="media-item">
+                        {% if file[1] == 'foto' %}
+                            <img src="{{ url_for('static', filename='uploads/' + file[0]) }}" onclick="openLightbox(this.src)">
+                        {% else %}
+                            <video src="{{ url_for('static', filename='uploads/' + file[0]) }}" controls></video>
+                        {% endif %}
+                        {% if loop.index == 4 and count > 4 %}
+                            <div class="more-overlay">+{{ count - 3 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
         {% endif %}
         
-        <div class="d-flex gap-4 mt-3 pt-2 border-top border-secondary border-opacity-10">
-            <a href="{{ url_for('main.like_post', post_id=post[0]) }}" class="text-decoration-none text-muted d-flex align-items-center gap-2">
-                <i class="bi bi-heart-fill {{ 'text-danger' if post[4] > 0 else '' }}"></i> {{ post[4] }}
-            </a>
-            
-            <a href="{{ url_for('main.comment_post', post_id=post[0]) }}" class="text-decoration-none d-flex align-items-center gap-2" style="color: var(--text-main);">
-                <i class="bi bi-chat"></i> {{ post[5] }}
-            </a>
+        <div class="mt-3">
+            {% include 'includes/post_actions.html' %}
         </div>
     </div>
 </div>
