@@ -1,10 +1,22 @@
-<div class="d-flex gap-4 pt-2 border-top border-secondary border-opacity-10">
-    <a href="#" onclick="toggleLike(event, {{ post[0] }})" class="d-flex align-items-center gap-2 text-muted text-decoration-none btn btn-sm p-0">
-        <i id="icon-like-{{ post[0] }}" class="bi bi-heart-fill {{ 'text-danger' if post[8] else '' }}"></i> 
-        <span id="count-like-{{ post[0] }}">{{ post[6] }} Dukungan</span>
-    </a>
+<div class="d-flex align-items-center justify-content-between w-100 px-2">
     
-    <a href="{{ url_for('main.comment_post', post_id=post[0]) }}" class="d-flex align-items-center gap-2 text-decoration-none btn btn-sm p-0" style="color: var(--text-main);">
-        <i class="bi bi-chat fs-6"></i> <span>{{ post[7] }} Komentar</span>
+    <button onclick="toggleLike({{ post[0] }})" 
+            id="btn-like-{{ post[0] }}"
+            class="btn btn-sm border-0 bg-transparent p-0 d-flex align-items-center gap-2 {{ 'text-danger fw-bold' if post[9] else 'text-muted' }}" 
+            style="transition: 0.2s;">
+        
+        <i class="bi {{ 'bi-heart-fill' if post[9] else 'bi-heart' }} fs-5" id="icon-like-{{ post[0] }}"></i>
+        
+        <span class="small" id="count-like-{{ post[0] }}">{{ post[7] }}</span>
+    </button>
+
+    <a href="{{ url_for('main.comment_post', post_id=post[0]) }}" class="btn btn-sm border-0 bg-transparent p-0 d-flex align-items-center gap-2 text-muted text-decoration-none hover-text-accent">
+        <i class="bi bi-chat fs-5"></i>
+        <span class="small">{{ post[8] }}</span>
     </a>
+
+    <button class="btn btn-sm border-0 bg-transparent p-0 d-flex align-items-center gap-2 text-muted hover-text-accent">
+        <i class="bi bi-share fs-5"></i>
+    </button>
+
 </div>

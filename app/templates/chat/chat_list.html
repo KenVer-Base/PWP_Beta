@@ -1,26 +1,27 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="feed-header mb-4 d-flex justify-content-between align-items-center">
-    <h5 class="fw-bold m-0">Pesan</h5>
-    <button class="btn btn-sm btn-outline-secondary rounded-3"><i class="bi bi-plus-lg"></i> Baru</button>
-</div>
-<div class="d-flex flex-column gap-2">
-    {% for u in users %}
-    <a href="{{ url_for('main.chat_room', friend_id=u[0]) }}" class="d-flex align-items-center p-3 rounded-4 text-decoration-none post-card mb-0 shadow-sm" style="border: 1px solid var(--border-color); color: var(--text-main);">
-        <img src="{{ url_for('static', filename='uploads/' + (u[2] if u[2] else 'default.png')) }}" 
-             class="avatar me-3" style="width: 50px; height: 50px;"
-             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ u[1] }}&background=random&color=fff&size=128';">
-        <div class="flex-grow-1">
-            <div class="fw-bold fs-5">{{ u[1] }}</div>
-            <div class="text-muted small">Ketuk untuk chat</div>
-        </div>
-        <i class="bi bi-chevron-right text-muted"></i>
-    </a>
+<div class="feed-header mb-3">Obrolan</div>
+
+<div class="bg-card rounded-4 border overflow-hidden">
+    {% if users %}
+        {% for u in users %}
+        <a href="{{ url_for('main.chat_room', friend_id=u[0]) }}" class="d-flex align-items-center gap-3 p-3 border-bottom text-decoration-none hover-bg">
+            <img src="{{ 'https://ui-avatars.com/api/?name=' + u[1] + '&background=random&color=fff&size=128&bold=true' if (not u[2] or u[2] == 'default.png') else url_for('static', filename='uploads/' + u[2]) }}" 
+                 class="avatar"
+                 onerror="this.src='https://ui-avatars.com/api/?name={{ u[1] }}&background=random&color=fff&size=128&bold=true';">
+                 
+            <div>
+                <div class="fw-bold text-main">{{ u[3] }}</div>
+                <div class="small text-muted">@{{ u[1] }}</div>
+            </div>
+            <i class="bi bi-chat-dots ms-auto text-accent"></i>
+        </a>
+        {% endfor %}
     {% else %}
-        <div class="trend-box text-center p-5 text-muted">
-            <i class="bi bi-chat-square-dots fs-1"></i>
-            <p class="mt-2">Belum ada teman chat.</p>
+        <div class="p-5 text-center text-muted">
+            <i class="bi bi-people fs-1"></i>
+            <p class="mt-2">Belum ada pengguna lain.</p>
         </div>
-    {% endfor %}
+    {% endif %}
 </div>
 {% endblock %}

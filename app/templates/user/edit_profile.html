@@ -3,21 +3,30 @@
 <div class="feed-header mb-4"><h5 class="fw-bold m-0">Pengaturan Profil</h5></div>
 <div class="post-card p-4">
     <form action="{{ url_for('main.edit_profile') }}" method="post" enctype="multipart/form-data">
+        
         <div class="mb-4">
-            <label class="form-label fw-bold small text-uppercase text-muted">Foto Profil</label>
+            <label class="form-label fw-bold small text-uppercase text-muted">Photo</label>
             <input type="file" name="profile_pic" class="form-control rounded-3">
         </div>
+        
         <div class="mb-4">
             <label class="form-label fw-bold small text-uppercase text-muted">Header Image</label>
             <input type="file" name="cover_pic" class="form-control rounded-3">
         </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-uppercase text-muted">Nama Lengkap</label>
+            <input type="text" name="full_name" class="form-control rounded-3" value="{{ full_name }}" placeholder="Nama Tampilan" required>
+        </div>
+
         <div class="mb-4">
             <label class="form-label fw-bold small text-uppercase text-muted">Bio / Deskripsi</label>
-            <textarea name="bio" class="form-control rounded-3" rows="4" placeholder="Ceritakan tentang dirimu...">{{ bio if bio else '' }}</textarea>
+            <textarea name="bio" class="form-control rounded-3" rows="4" placeholder="Tell us about you..">{{ bio if bio else '' }}</textarea>
         </div>
+        
         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
              <a href="{{ url_for('main.profile', username=session['username']) }}" class="btn btn-outline-secondary rounded-3 px-4 py-2 border-0">Batal</a>
-            <button type="submit" class="btn-primary-custom w-auto px-5 py-2 mt-0">Simpan Perubahan</button>
+            <button type="submit" class="btn-primary-custom w-auto px-5 py-2 mt-0">Save</button>
         </div>
     </form>
 </div>

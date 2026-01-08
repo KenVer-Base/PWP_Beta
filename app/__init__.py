@@ -1,30 +1,30 @@
 from flask import Flask
 from flask_mysqldb import MySQL
 from flask_socketio import SocketIO
-from config import Config
-import os
 
-# Inisialisasi Ekstensi (kosong dulu)
 mysql = MySQL()
 socketio = SocketIO()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
+    
+    app.config['SECRET_KEY'] = 'rahasia_negara'
+    app.config['UPLOAD_FOLDER'] = 'app/static/uploads'
+    
+    app.config['MYSQL_HOST'] = 'localhost'
+    app.config['MYSQL_USER'] = 'root'
+    app.config['MYSQL_PASSWORD'] = ''
+    app.config['MYSQL_DB'] = 'social_media_db'
+    
+    app.config['MYSQL_CHARSET'] = 'utf8mb4' 
 
-    # Pastikan folder upload ada
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
-
-    # Hubungkan Ekstensi ke App
     mysql.init_app(app)
     socketio.init_app(app)
 
-    # Daftarkan Blueprints (Rute yang dipisah-pisah)
-    from app.auth.routes import auth
-    from app.main.routes import main
+    from .main.routes import main
+    from .auth.routes import auth
     
-    app.register_blueprint(auth)
     app.register_blueprint(main)
+    app.register_blueprint(auth)
 
     return app

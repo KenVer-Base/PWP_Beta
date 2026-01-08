@@ -4,9 +4,10 @@
 
 <div class="trend-box mb-4 p-3">
     <div class="d-flex gap-3">
-        <img src="{{ url_for('static', filename='uploads/' + (current_user[2] if current_user and current_user[2] else 'default.png')) }}" 
+        <img src="{{ 'https://ui-avatars.com/api/?name=' + current_user[1] + '&background=random&color=fff&size=128&bold=true' if (not current_user[2] or current_user[2] == 'default.png') else url_for('static', filename='uploads/' + current_user[2]) }}" 
              class="avatar"
-             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ current_user[1] }}&background=random&color=fff&size=128';">
+             onerror="this.src='https://ui-avatars.com/api/?name={{ current_user[1] }}&background=random&color=fff&size=128&bold=true';">
+             
         <div class="w-100">
             <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
                 <textarea name="caption" class="form-control border-0 fs-5 mb-2 bg-transparent" rows="2" 
@@ -26,16 +27,20 @@
 </div>
 
 {% for post in posts %}
-<div class="post-card d-flex gap-3">
+<div class="post-card d-flex gap-3 pb-2">
     <a href="{{ url_for('main.profile', username=post[4]) }}" class="flex-shrink-0">
-        <img src="{{ url_for('static', filename='uploads/' + (post[5] if post[5] else 'default.png')) }}" 
+        <img src="{{ 'https://ui-avatars.com/api/?name=' + post[4] + '&background=random&color=fff&size=128&bold=true' if (not post[6] or post[6] == 'default.png') else url_for('static', filename='uploads/' + post[6]) }}" 
              class="avatar"
-             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ post[4] }}&background=random&color=fff&size=128';">
+             onerror="this.src='https://ui-avatars.com/api/?name={{ post[4] }}&background=random&color=fff&size=128&bold=true';">
     </a>
+    
     <div class="w-100">
         <div class="d-flex justify-content-between align-items-start mb-2">
             <div>
-                <a href="{{ url_for('main.profile', username=post[4]) }}" class="fw-bold text-accent text-decoration-none">{{ post[4] }}</a>
+                <a href="{{ url_for('main.profile', username=post[4]) }}" class="text-decoration-none">
+                    <span class="fw-bold text-accent">{{ post[5] if post[5] else post[4] }}</span>
+                    <span class="text-muted small ms-1">@{{ post[4] }}</span>
+                </a>
                 <div class="text-muted small" style="font-size: 0.8rem;">{{ post[3] }}</div>
             </div>
             {% if post[2] == session['id'] %}
@@ -45,10 +50,10 @@
         
         <p class="mb-3" style="white-space: pre-wrap;">{{ post[1] }}</p>
 
-        {% if post[9] %}
-            {% set count = post[9]|length %}
+        {% if post[10] %}
+            {% set count = post[10]|length %}
             <div class="media-grid count-{{ 4 if count >= 4 else count }}">
-                {% for file in post[9] %}
+                {% for file in post[10] %}
                     {% if loop.index <= 4 %}
                     <div class="media-item">
                         {% if file[1] == 'foto' %}
@@ -65,7 +70,61 @@
             </div>
         {% endif %}
         
-        {% include 'includes/post_actions.html' %}
+        <div class="mt-3 border-bottom border-secondary border-opacity-10 pb-2">
+            {% include 'includes/post_actions.html' %}
+        </div>
+
+        <div class="mt-3">
+            {% if post[11] %}
+                {% if post[11]|length > 2 %}
+                    <div class="mb-2">
+                        <a href="{{ url_for('main.comment_post', post_id=post[0]) }}" class="text-decoration-none text-muted small fw-bold">
+                            Lihat {{ post[11]|length - 2 }} komentar lainnya...
+                        </a>
+                    </div>
+                {% endif %}
+
+                <div class="d-flex flex-column gap-2 mb-3">
+                    {% for comment in post[11][:2] %}
+                    <div class="d-flex gap-2">
+                        <img src="{{ 'https://ui-avatars.com/api/?name=' + comment[1] + '&background=random&color=fff&size=64&bold=true' if (not comment[2] or comment[2] == 'default.png') else url_for('static', filename='uploads/' + comment[2]) }}" 
+                             class="rounded-circle flex-shrink-0" style="width: 24px; height: 24px; object-fit: cover;"
+                             onerror="this.src='https://ui-avatars.com/api/?name={{ comment[1] }}&background=random&color=fff&size=64&bold=true';">
+                        
+                        <div class="bg-main rounded-3 px-3 py-2 w-100 position-relative" style="background-color: var(--bg-main);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('main.profile', username=comment[1]) }}" class="fw-bold text-main text-decoration-none small">{{ comment[3] }}</a>
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="text-muted" style="font-size: 0.7rem;">{{ comment[4].strftime('%H:%M') }}</small>
+                                    
+                                    {% if comment[6]|int == session['id']|int %}
+                                        <a href="{{ url_for('main.delete_comment', comment_id=comment[5]) }}" 
+                                           class="text-danger opacity-50 hover-opacity-100 text-decoration-none"
+                                           onclick="return confirm('Hapus komentar?')">
+                                            <i class="bi bi-trash small"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="mb-0 small text-muted">{{ comment[0] }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form action="{{ url_for('main.comment_post', post_id=post[0]) }}" method="post" class="d-flex gap-2 align-items-center">
+                <img src="{{ 'https://ui-avatars.com/api/?name=' + current_user[1] + '&background=random&color=fff&size=64&bold=true' if (not current_user[2] or current_user[2] == 'default.png') else url_for('static', filename='uploads/' + current_user[2]) }}" 
+                     class="rounded-circle" style="width: 32px; height: 32px;"
+                     onerror="this.src='https://ui-avatars.com/api/?name={{ current_user[1] }}&background=random&color=fff&size=64&bold=true';">
+                
+                <div class="input-group">
+                    <input type="text" name="content" class="form-control rounded-pill border-0 bg-main small py-2" 
+                           placeholder="Tulis komentar..." style="background-color: var(--bg-main);" autocomplete="off" required>
+                    <button class="btn btn-link text-accent border-0 p-0 ms-2"><i class="bi bi-send-fill"></i></button>
+                </div>
+            </form>
+        </div>
 
     </div>
 </div>

@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
 
-
 :root {
     --bg-main: #191b1f; 
     --bg-card: #25282c;
@@ -33,7 +32,6 @@ body.light-mode {
     --shadow-sm: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-/* --- 2. BASE STYLES --- */
 body {
     background-color: var(--bg-main);
     color: var(--text-main);
@@ -44,7 +42,6 @@ body {
     line-height: 1.6;
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { 
@@ -59,7 +56,6 @@ a:hover { color: var(--accent) !important; }
 h1, h2, h3, h4, h5, h6, p, span, div, label { color: var(--text-main); }
 .text-muted, .small, small { color: var(--text-muted) !important; font-weight: 400; }
 
-/* --- 3. FORM ELEMENTS --- */
 .form-control {
     background-color: var(--bg-card) !important;
     border: 2px solid transparent !important;
@@ -95,7 +91,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label { color: var(--text-main); }
     transform: scale(0.98);
 }
 
-/* --- 4. LAYOUT --- */
 .layout-grid {
     display: grid;
     grid-template-columns: 260px 600px 340px;
@@ -126,7 +121,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label { color: var(--text-main); }
     z-index: 100;
 }
 
-/* --- 5. NAVIGASI SIDEBAR --- */
 .nav-link-custom {
     display: flex; align-items: center; padding: 12px 20px;
     margin-bottom: 8px; border-radius: 12px;
@@ -148,7 +142,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label { color: var(--text-main); }
     box-shadow: var(--shadow-sm);
 }
 
-/* --- 6. CARD & FEED --- */
 .post-card {
     padding: 20px;
     border: 1px solid var(--border-color);
@@ -182,7 +175,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label { color: var(--text-main); }
 
 .text-accent { color: var(--accent) !important; font-weight: 600; }
 
-/* Animasi Heart Like */
 .bi-heart-fill.text-danger {
     animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: inline-block;
@@ -193,7 +185,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label { color: var(--text-main); }
     100% { transform: scale(1); }
 }
 
-/* --- 7. SLIDING AUTH (FIXED HEIGHT) --- */
 .auth-wrapper {
     width: 100%;
     max-width: 400px;
@@ -266,7 +257,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label { color: var(--text-main); }
 .auth-wrapper.show-login #form-login-section,
 .auth-wrapper.show-register #form-register-section { opacity: 1; }
 
-/* --- 8. UTILITIES LAINNYA --- */
 .modal-content {
     background-color: var(--bg-card);
     border: none; border-radius: 20px;
@@ -294,10 +284,9 @@ body.light-mode .btn-close { filter: invert(0); }
     transform: scale(1.02);
 }
 
-/* --- 9. SPLIT IMAGE GRID (TWITTER STYLE) --- */
 .media-grid {
     display: grid;
-    gap: 2px; /* Jarak tipis antar foto */
+    gap: 2px; 
     width: 100%;
     border-radius: 12px;
     overflow: hidden;
@@ -306,7 +295,6 @@ body.light-mode .btn-close { filter: invert(0); }
     background-color: #000;
 }
 
-/* Pastikan gambar/video mengisi penuh kotaknya */
 .media-item { 
     position: relative; 
     width: 100%; 
@@ -317,29 +305,24 @@ body.light-mode .btn-close { filter: invert(0); }
 .media-item img, .media-item video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* CROP agar rapi */
+    object-fit: cover; 
     display: block;
     transition: transform 0.3s ease;
     cursor: pointer;
 }
 
-/* Efek zoom dikit pas hover */
 .media-item:hover img { transform: scale(1.03); }
 
-/* LOGIKA LAYOUT GRID */
-/* 1 FILE: Tampil Full, tinggi max 500px */
 .media-grid.count-1 { 
     grid-template-columns: 1fr; 
     max-height: 500px; 
 }
 
-/* 2 FILES: Split Kiri - Kanan */
 .media-grid.count-2 { 
     grid-template-columns: 1fr 1fr; 
     aspect-ratio: 16/9; 
 }
 
-/* 3 FILES: Kiri Besar, Kanan Dua Tumpuk */
 .media-grid.count-3 { 
     grid-template-columns: 1.5fr 1fr; 
     grid-template-rows: 1fr 1fr; 
@@ -349,14 +332,12 @@ body.light-mode .btn-close { filter: invert(0); }
     grid-row: span 2; 
 }
 
-/* 4 FILES: Grid 2x2 */
 .media-grid.count-4 { 
     grid-template-columns: 1fr 1fr; 
     grid-template-rows: 1fr 1fr; 
     aspect-ratio: 16/9; 
 }
 
-/* OVERLAY (+2, +3 dst) */
 .more-overlay {
     position: absolute; top: 0; left: 0; 
     width: 100%; height: 100%;
@@ -368,7 +349,6 @@ body.light-mode .btn-close { filter: invert(0); }
     z-index: 2; pointer-events: none;
 }
 
-/* --- 10. LIGHTBOX (IMAGE VIEWER) --- */
 #image-lightbox {
     position: fixed;
     top: 0; left: 0;
@@ -413,3 +393,68 @@ body.light-mode .btn-close { filter: invert(0); }
     transition: 0.2s;
 }
 .lightbox-close:hover { background: rgba(255, 255, 255, 0.3); }
+
+.sidebar-right {
+    position: sticky; 
+    top: 20px; 
+    height: calc(100vh - 40px);
+    overflow-y: auto; 
+    padding-bottom: 20px;
+    
+    scrollbar-width: none; 
+    -ms-overflow-style: none;  
+}
+
+.sidebar-right::-webkit-scrollbar {
+    display: none; 
+}
+
+.search-wrapper {
+    background-color: var(--bg-main); 
+    border: 2px solid transparent;    
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    padding: 2px 10px; 
+}
+
+.search-wrapper:focus-within {
+    border-color: var(--accent);      
+    box-shadow: var(--shadow-glow);
+    background-color: var(--bg-hover);
+    transform: translateY(-1px);
+}
+
+.search-wrapper input.form-control {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding-left: 10px;
+}
+
+.search-wrapper:focus-within i {
+    color: var(--accent) !important;
+}
+
+.btn-send {
+    background: transparent !important; 
+    border: none !important;           
+    color: var(--accent) !important;   
+    padding: 0 10px !important;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-send:hover {
+    background: transparent !important; 
+    transform: scale(1.25) rotate(-10deg); 
+    filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.6));
+    cursor: pointer;
+}
+
+.btn-send:active {
+    transform: scale(0.9); 
+}

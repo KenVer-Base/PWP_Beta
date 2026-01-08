@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Social App</title>
+    <title>Whistle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -13,14 +13,18 @@
     {% if session.loggedin %}
     <div class="layout-grid">
         {% include 'includes/sidebar.html' %}
+        
         <div class="main-feed">
              {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}{% for category, message in messages %}
+                {% if messages %}
+                    {% for category, message in messages %}
                         <div class="alert alert-{{ category }} rounded-4 mb-4 border-0 shadow-sm">{{ message }}</div>
-                {% endfor %}{% endif %}
+                    {% endfor %}
+                {% endif %}
             {% endwith %}
             {% block content %}{% endblock %}
         </div>
+        
         {% include 'includes/footer.html' %}
     </div>
 
@@ -44,6 +48,7 @@
         </div>
       </div>
     </div>
+    
     {% else %}
         <div class="d-flex justify-content-center align-items-center vh-100 px-3">
             {% block auth_content %}{% endblock %}
@@ -57,65 +62,154 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // LOGIKA LIGHTBOX
+        // ==========================================
+        // 1. LOGIKA LIGHTBOX (IMAGE VIEWER)
+        // ==========================================
         const lightbox = document.getElementById('image-lightbox');
         const lightboxImg = document.getElementById('lightbox-img');
 
         function openLightbox(src) {
             lightboxImg.src = src;
             lightbox.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden'; // Matikan scroll
         }
 
         function closeLightbox() {
             lightbox.classList.remove('active');
             setTimeout(() => { lightboxImg.src = ''; }, 300);
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = 'auto'; // Hidupkan scroll
         }
+
+        // Tutup pakai tombol ESC
         document.addEventListener('keydown', function(event) {
             if (event.key === "Escape") closeLightbox();
         });
 
-        // TEMA & WARNA
-        const body = document.getElementById('body-app');
-        const root = document.documentElement;
-        
         function hexToRgb(hex) {
             var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
         }
+
         function setContrastText(hexColor) {
             const rgb = hexToRgb(hexColor);
             if (!rgb) return;
             const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-            if (brightness > 125) root.style.setProperty('--text-on-accent', '#111111');
-            else root.style.setProperty('--text-on-accent', '#ffffff');
+            const root = document.documentElement;
+
+
+            if (brightness > 125) {
+                root.style.setProperty('--text-on-accent', '#111111');
+            } else {
+                root.style.setProperty('--text-on-accent', '#ffffff');
+            }
         }
 
-        if (localStorage.getItem('theme') === 'light') body.classList.add('light-mode');
-        if (localStorage.getItem('accent')) {
-            root.style.setProperty('--accent', localStorage.getItem('accent'));
-            setContrastText(localStorage.getItem('accent'));
+        const body = document.getElementById('body-app');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        const colorPicker = document.getElementById('accent-color-picker');
+        const root = document.documentElement;
+
+        function updateThemeUI() {
+            if (document.body.classList.contains('light-mode')) {
+                if(themeIcon) themeIcon.className = 'bi bi-moon-stars-fill me-2 text-accent';
+                if(themeText) themeText.innerText = 'Mode Gelap';
+            } else {
+                if(themeIcon) themeIcon.className = 'bi bi-sun-fill me-2 text-accent';
+                if(themeText) themeText.innerText = 'Mode Terang';
+            }
+        }
+
+        const currentTheme = localStorage.getItem('theme');
+        const currentAccent = localStorage.getItem('accent');
+
+        if (currentTheme === 'light') {
+            body.classList.add('light-mode');
+        }
+        
+        updateThemeUI();
+
+        if (currentAccent) {
+            root.style.setProperty('--accent', currentAccent);
+            const rgbVal = hexToRgb(currentAccent);
+            if(rgbVal) root.style.setProperty('--accent-rgb', `${rgbVal.r}, ${rgbVal.g}, ${rgbVal.b}`);
+            if(colorPicker) colorPicker.value = currentAccent;
+            setContrastText(currentAccent);
+        } else {
+            setContrastText('#f4d03f'); 
         }
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
-            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+            let theme = 'dark'; 
+            if (document.body.classList.contains('light-mode')) {
+                theme = 'light';
+            } 
+            localStorage.setItem('theme', theme);
+            updateThemeUI();
         }
 
-        // LIKE AJAX
-        function toggleLike(event, postId) {
-            event.preventDefault(); 
-            fetch('/like/' + postId, { method: 'POST' })
-            .then(res => res.json())
+        if(colorPicker) {
+            colorPicker.addEventListener('input', function(e) {
+                const color = e.target.value;
+                root.style.setProperty('--accent', color);
+                const rgbVal = hexToRgb(color);
+                if(rgbVal) root.style.setProperty('--accent-rgb', `${rgbVal.r}, ${rgbVal.g}, ${rgbVal.b}`);
+                localStorage.setItem('accent', color);
+                setContrastText(color);
+            });
+        }
+
+        function toggleLike(postId) {
+            const btn = document.getElementById(`btn-like-${postId}`);
+            const icon = document.getElementById(`icon-like-${postId}`);
+            const countSpan = document.getElementById(`count-like-${postId}`);
+
+            // Cek status sekarang berdasarkan warna tombol (Merah = Liked)
+            let isLiked = btn.classList.contains('text-danger');
+            let currentCount = parseInt(countSpan.innerText);
+
+            if (isLiked) {
+                // JIKA UNLIKE: Ubah jadi abu-abu & heart kosong
+                btn.classList.remove('text-danger', 'fw-bold');
+                btn.classList.add('text-muted');
+                icon.classList.remove('bi-heart-fill');
+                icon.classList.add('bi-heart');
+                countSpan.innerText = currentCount - 1;
+            } else {
+                // JIKA LIKE: Ubah jadi merah & heart penuh
+                btn.classList.remove('text-muted');
+                btn.classList.add('text-danger', 'fw-bold');
+                icon.classList.remove('bi-heart');
+                icon.classList.add('bi-heart-fill');
+                countSpan.innerText = currentCount + 1;
+                
+                // Sedikit animasi pop
+                icon.style.transform = "scale(1.2)";
+                setTimeout(() => icon.style.transform = "scale(1)", 200);
+            }
+
+            // Kirim request ke backend agar tersimpan di DB
+            fetch(`/like/${postId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    document.getElementById('count-like-' + postId).innerText = data.likes + ' Dukungan';
-                    const icon = document.getElementById('icon-like-' + postId);
-                    if (data.action === 'liked') icon.classList.add('text-danger');
-                    else icon.classList.remove('text-danger');
-                } else window.location.href = "{{ url_for('auth.login') }}";
-            });
+                    // Sinkronkan jumlah like dari server untuk akurasi
+                    countSpan.innerText = data.likes;
+                } else {
+                    // Jika gagal (misal belum login), kembalikan tampilan
+                    alert("Gagal. Pastikan Anda sudah login.");
+                    location.reload();
+                }
+            })
+            .catch(error => console.error('Error:', error));
         }
     </script>
 </body>

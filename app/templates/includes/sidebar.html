@@ -9,22 +9,22 @@
                 <i class="bi bi-house-door-fill me-3"></i> <span>Beranda</span>
             </a>
             <a href="{{ url_for('main.explore') }}" class="nav-link-custom {{ 'active' if request.endpoint == 'main.explore' else '' }}">
-                <i class="bi bi-compass-fill me-3"></i> <span>Jelajah</span>
+                <i class="bi bi-compass-fill me-3"></i> <span>Jelajahi</span>
             </a>
             <a href="{{ url_for('main.chat_list') }}" class="nav-link-custom {{ 'active' if 'chat' in request.endpoint else '' }}">
                 <i class="bi bi-chat-dots-fill me-3"></i> <span>Pesan</span>
             </a>
             <a href="{{ url_for('main.profile', username=session['username']) }}" class="nav-link-custom {{ 'active' if request.endpoint == 'main.profile' else '' }}">
-                <i class="bi bi-person-circle me-3"></i> <span>Halaman Saya</span>
+                <i class="bi bi-person-circle me-3"></i> <span>Profil</span>
             </a>
             <a href="{{ url_for('main.notifications') }}" class="nav-link-custom {{ 'active' if request.endpoint == 'main.notifications' }}">
-                <i class="bi bi-bell-fill me-3"></i> <span>Notifikasi</span>
+                <i class="bi bi-bell-fill me-3"></i> <span>Notifications</span>
             </a>
         </nav>
         
         <div class="px-3 mt-3">
             <button class="btn-primary-custom shadow-sm d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#postModal">
-                <i class="bi bi-plus-lg"></i> BUAT KARYA
+                <i class="bi bi-plus-lg"></i> Posting Sesuatu
             </button>
         </div>
     </div>
@@ -48,7 +48,22 @@
             <input type="color" id="accent-color-picker" class="form-control form-control-color border-0 bg-transparent p-0" value="#f4d03f">
         </div>
 
-         <a href="{{ url_for('auth.logout') }}" class="nav-link-custom text-danger mt-3 justify-content-center border border-danger border-opacity-25" style="border-radius: 12px;">
+        {% set uname = current_user[1] if current_user else session['username'] %}
+        {% set pic = current_user[2] if current_user else 'default.png' %}
+        {% set fname = current_user[3] if current_user and current_user[3] else uname %}
+
+        <div class="d-flex align-items-center gap-2 mt-4 mb-2 p-2 rounded-3 border border-secondary border-opacity-10 bg-card">
+            <img src="{{ 'https://ui-avatars.com/api/?name=' + uname + '&background=random&color=fff&size=128&bold=true' if (not pic or pic == 'default.png') else url_for('static', filename='uploads/' + pic) }}" 
+                 class="avatar rounded-circle" style="width: 40px; height: 40px;"
+                 onerror="this.src='https://ui-avatars.com/api/?name={{ uname }}&background=random&color=fff&size=128&bold=true';">
+            
+            <div class="overflow-hidden">
+                <div class="fw-bold text-truncate small" style="max-width: 120px;">{{ fname }}</div>
+                <div class="text-muted small" style="font-size: 0.75rem;">@{{ uname }}</div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('auth.logout') }}" class="nav-link-custom text-danger mt-2 justify-content-center border border-danger border-opacity-25" style="border-radius: 12px;">
             <i class="bi bi-box-arrow-left me-2"></i> <span>Keluar Akun</span>
         </a>
     </div>
