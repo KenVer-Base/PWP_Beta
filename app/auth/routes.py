@@ -54,7 +54,6 @@ def register():
         if existing_user:
             flash('Username atau Email sudah dipakai!', 'danger')
         else:
-            # 3. ENKRIPSI PASSWORD SEBELUM DISIMPAN
             hashed_password = generate_password_hash(password)
 
             cur.execute("INSERT INTO users (username, full_name, email, password) VALUES (%s, %s, %s, %s)", 

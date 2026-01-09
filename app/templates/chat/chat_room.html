@@ -4,62 +4,92 @@
     <div class="feed-header d-flex align-items-center gap-3 border-bottom-0 p-3 mb-2 rounded-4 mx-2 mt-2 shadow-sm" style="background: var(--bg-card);">
         <a href="{{ url_for('main.chat_list') }}" class="text-muted fs-4"><i class="bi bi-arrow-left"></i></a>
         <div class="d-flex align-items-center">
-            <img src="{{ url_for('static', filename='uploads/' + (friend[1] if friend[1] else 'default.png')) }}" 
-                 class="avatar me-2" style="width: 40px; height: 40px;"
+            <img src="{{ url_for('static', filename='uploads/' + (friend[1] if friend[1] and friend[1] != 'default.png' else 'default.png')) }}" 
+                 class="avatar me-2 rounded-circle" style="width: 40px; height: 40px; object-fit: cover;"
                  onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ friend[0] }}&background=random&color=fff&size=128';">
             <div>
-                <h6 class="fw-bold m-0">{{ friend[0] }}</h6>
+                <h6 class="fw-bold m-0">{{ friend[2] if friend[2] else friend[0] }}</h6>
+                <small class="text-muted" style="font-size: 0.8rem;">@{{ friend[0] }}</small>
             </div>
         </div>
     </div>
-    <div id="chat-box" class="flex-grow-1 overflow-auto p-3" style="scroll-behavior: smooth;">
+
+    <div id="chat-box" class="flex-grow-1 overflow-auto p-2" style="scroll-behavior: smooth;">
         {% for msg in messages %}
             <div class="d-flex mb-3 {{ 'justify-content-end' if msg[1] == session['id'] else 'justify-content-start' }}">
-                <div class="p-3 px-4 rounded-4" 
-                     style="max-width: 75%; word-wrap: break-word; 
-                     background-color: {{ 'var(--accent)' if msg[1] == session['id'] else 'var(--bg-card)' }}; 
-                     color: {{ 'var(--text-on-accent)' if msg[1] == session['id'] else 'var(--text-main)' }};
-                     box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    {{ msg[3] }}
+                <div class="p-3 px-4 rounded-4 text-break" 
+                     style="max-width: 75%; 
+                            background-color: {{ 'var(--accent)' if msg[1] == session['id'] else 'var(--bg-card)' }}; 
+                            color: {{ 'var(--text-on-accent)' if msg[1] == session['id'] else 'var(--text-main)' }};
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    
+                    {{ msg[3] }} <div class="text-end opacity-50 mt-1" style="font-size: 0.65rem;">
+                        {{ msg[4].strftime('%H:%M') }}
+                    </div>
                 </div>
             </div>
         {% endfor %}
     </div>
-    <div class="p-3">
-        <div class="input-group p-1 bg-card rounded-4 border" style="background-color: var(--bg-card); border-color: var(--border-color) !important;">
-            <input type="text" id="message-input" class="form-control border-0 py-3 px-4 bg-transparent shadow-none" placeholder="Ketik pesan..." autocomplete="off">
-            <button onclick="sendMessage()" class="btn btn-primary-custom rounded-4 m-1 px-4 mt-0"><i class="bi bi-send-fill"></i></button>
-        </div>
+
+    <div class="p-3 border-top border-secondary border-opacity-10 bg-main position-sticky bottom-0 w-100" style="z-index: 10;">
+        <form id="messageForm" class="d-flex align-items-center gap-2">
+            <div class="search-wrapper w-100">
+                <input type="text" id="messageInput" class="form-control border-0 bg-transparent text-main py-2 shadow-none px-3" 
+                       placeholder="Ketik pesan..." autocomplete="off" required>
+                <button type="submit" class="btn-send pe-3 ps-2">
+                    <i class="bi bi-send-fill fs-5"></i>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
     var socket = io();
     var room = "{{ room }}";
     var receiver_id = {{ friend_id }};
     var chatBox = document.getElementById('chat-box');
-    chatBox.scrollTop = chatBox.scrollHeight;
+    var currentUser = "{{ session['username'] }}"; 
+    
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    scrollToBottom();
+    
     socket.emit('join', {room: room});
 
     function sendMessage() {
-        var input = document.getElementById('message-input');
+        var input = document.getElementById('messageInput');
         var msg = input.value;
         if (msg.trim() !== "") {
-            socket.emit('send_message', {message: msg, room: room, receiver_id: receiver_id});
-            input.value = ''; input.focus();
+            socket.emit('send_message', {
+                message: msg, 
+                room: room, 
+                receiver_id: receiver_id
+            });
+            input.value = ''; 
+            input.focus();
         }
     }
-    document.getElementById("message-input").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") { event.preventDefault(); sendMessage(); }
+
+    document.getElementById("messageForm").addEventListener("submit", function(event) {
+        event.preventDefault(); 
+        sendMessage();
     });
+
     socket.on('receive_message', function(data) {
-        var isMe = (data.sender === "{{ session['username'] }}");
+        var isMe = (data.sender === currentUser);
+        
         var divRow = document.createElement('div');
         divRow.className = "d-flex mb-3 " + (isMe ? "justify-content-end" : "justify-content-start");
+        divRow.className += " animate__animated animate__fadeInUp"; 
+
         var divBubble = document.createElement('div');
-        divBubble.className = "p-3 px-4 rounded-4";
+        divBubble.className = "p-3 px-4 rounded-4 text-break";
         divBubble.style.maxWidth = "75%";
-        divBubble.style.wordWrap = "break-word";
         divBubble.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+        
         if(isMe) {
             divBubble.style.backgroundColor = "var(--accent)";
             divBubble.style.color = "var(--text-on-accent)";
@@ -67,8 +97,24 @@
             divBubble.style.backgroundColor = "var(--bg-card)";
             divBubble.style.color = "var(--text-main)";
         }
-        divBubble.innerText = data.message;
-        divRow.appendChild(divBubble); chatBox.appendChild(divRow); chatBox.scrollTop = chatBox.scrollHeight;
+        
+        var textNode = document.createTextNode(data.message);
+        divBubble.appendChild(textNode);
+        var now = new Date();
+        var timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        
+        var divTime = document.createElement('div');
+        divTime.className = "text-end opacity-50 mt-1";
+        divTime.style.fontSize = "0.65rem";
+        divTime.innerText = timeString;
+        
+        divBubble.appendChild(divTime);
+
+        // 5. Gabungkan
+        divRow.appendChild(divBubble); 
+        chatBox.appendChild(divRow); 
+        
+        scrollToBottom();
     });
 </script>
 {% endblock %}

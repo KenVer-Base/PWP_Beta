@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block content %}
 <div class="feed-header d-flex align-items-center gap-3">
-    <a href="javascript:history.back()" class="btn btn-dark rounded-3 p-2 bg-card text-accent border-0">
+    <a href="{{ url_for('main.index') }}" class="btn btn-dark rounded-3 p-2 bg-card text-accent border-0">
         <i class="bi bi-arrow-left fs-5"></i>
     </a>
     <span class="fw-bold">Komentar</span>
@@ -9,18 +9,20 @@
 
 <div class="post-card p-3 mb-3">
     <p class="mb-2 text-muted small">Membalas postingan:</p>
-    <p class="fs-5 mb-0" style="white-space: pre-wrap;">{{ caption }}</p>
+    <p class="fs-5 mb-0" style="white-space: pre-wrap;">{{ caption|linkify|safe }}</p>
 </div>
 
 <div class="mb-4 px-2">
-    <form action="{{ url_for('main.comment_post', post_id=post_id) }}" method="post" class="d-flex gap-2 align-items-center">
-        <img src="{{ 'https://ui-avatars.com/api/?name=' + session['username'] + '&background=random&color=fff&size=128&bold=true' }}" 
-             class="avatar rounded-circle" style="width: 40px; height: 40px;"
-             onerror="this.src='https://ui-avatars.com/api/?name={{ session['username'] }}&background=random&color=fff&size=128&bold=true';">
+    <form id="form-komentar" class="d-flex gap-2 align-items-center">
+        <input type="hidden" name="post_id" value="{{ post_id }}">
+
+        <img src="{{ url_for('static', filename='uploads/' + current_user[2]) if (current_user[2] and current_user[2] != 'default.png') else 'https://ui-avatars.com/api/?name=' + current_user[1] + '&background=random&color=fff&size=128&bold=true' }}" 
+             class="avatar rounded-circle" style="width: 40px; height: 40px; object-fit: cover;"
+             onerror="this.src='https://ui-avatars.com/api/?name={{ current_user[1] }}&background=random&color=fff&size=128&bold=true';">
         
-        <div class="input-group search-wrapper w-100"> <input type="text" name="content" class="form-control border-0 bg-transparent text-main" 
-                   placeholder="Tulis balasanmu..." autocomplete="off" required>
-            
+        <div class="input-group search-wrapper w-100">
+            <input type="text" name="content" class="form-control border-0 bg-transparent text-main" 
+                   placeholder="Tulis komentar..." autocomplete="off" required>
             <button type="submit" class="btn-send me-2">
                 <i class="bi bi-send-fill fs-5"></i>
             </button>
@@ -28,7 +30,7 @@
     </form>
 </div>
 
-<div class="d-flex flex-column gap-3 pb-5">
+<div class="d-flex flex-column gap-3 pb-5" id="list-komentar">
     {% for c in comments %}
     <div class="post-card p-3 d-flex gap-3">
         <a href="{{ url_for('main.profile', username=c[1]) }}" class="flex-shrink-0">
@@ -55,14 +57,86 @@
                     </a>
                 {% endif %}
             </div>
-            <p class="mb-0 mt-1" style="white-space: pre-wrap;">{{ c[0] }}</p>
+            <p class="mb-0 mt-1" style="white-space: pre-wrap;">{{ c[0]|linkify|safe }}</p>
         </div>
     </div>
     {% else %}
-    <div class="text-center text-muted py-5">
+    <div id="no-comment-msg" class="text-center text-muted py-5">
         <i class="bi bi-chat-square-text fs-1 opacity-50"></i>
         <p class="small mt-2">Belum ada komentar.</p>
     </div>
     {% endfor %}
 </div>
+
+<script>
+    document.getElementById('form-komentar').addEventListener('submit', function(e) {
+        e.preventDefault(); // Mencegah reload halaman
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true; // Cegah double klik
+
+        fetch("{{ url_for('main.comment_post', post_id=post_id) }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            submitBtn.disabled = false;
+            
+            if (data.status === 'success') {
+                // Hapus pesan "Belum ada komentar" jika ada
+                const noMsg = document.getElementById('no-comment-msg');
+                if(noMsg) noMsg.style.display = 'none';
+
+                // Tambahkan komentar baru ke list secara real-time
+                const listKomentar = document.getElementById('list-komentar');
+                
+                // Cek apakah user punya foto profil (logic JS mirroring logic Python)
+                // Kita ambil URL default avatar dulu biar aman
+                let avatarUrl = `https://ui-avatars.com/api/?name=${data.user}&background=random&color=fff&size=128&bold=true`;
+                
+                // Karena data foto profil ada di current_user[2] (Python), tapi JS tidak bisa baca variabel Python langsung setelah page load,
+                // Kita ambil dari gambar profil yang ada di form input (karena itu pasti gambar user yang lagi login)
+                const myAvatarImg = document.querySelector('#form-komentar img');
+                if(myAvatarImg) avatarUrl = myAvatarImg.src;
+
+                const htmlBaru = `
+                    <div class="post-card p-3 d-flex gap-3 animate__animated animate__fadeIn">
+                        <a href="/${data.user}" class="flex-shrink-0">
+                            <img src="${avatarUrl}" class="avatar">
+                        </a>
+                        <div class="w-100">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="/${data.user}" class="text-decoration-none fw-bold text-accent">
+                                        ${data.full_name}
+                                    </a>
+                                    <span class="text-muted small">@${data.user}</span>
+                                    <span class="text-muted small">· Baru saja</span>
+                                </div>
+                            </div>
+                            <p class="mb-0 mt-1" style="white-space: pre-wrap;">${data.komentar_baru}</p>
+                        </div>
+                    </div>
+                `;
+                
+                listKomentar.insertAdjacentHTML('beforeend', htmlBaru);
+                
+                // Reset input
+                this.querySelector('input[name="content"]').value = '';
+                
+                // Scroll ke bawah
+                window.scrollTo(0, document.body.scrollHeight);
+            } else {
+                alert('Gagal mengirim komentar: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            submitBtn.disabled = false;
+        });
+    });
+</script>
+
 {% endblock %}

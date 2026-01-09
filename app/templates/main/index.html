@@ -7,7 +7,6 @@
         <img src="{{ 'https://ui-avatars.com/api/?name=' + current_user[1] + '&background=random&color=fff&size=128&bold=true' if (not current_user[2] or current_user[2] == 'default.png') else url_for('static', filename='uploads/' + current_user[2]) }}" 
              class="avatar"
              onerror="this.src='https://ui-avatars.com/api/?name={{ current_user[1] }}&background=random&color=fff&size=128&bold=true';">
-             
         <div class="w-100">
             <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
                 <textarea name="caption" class="form-control border-0 fs-5 mb-2 bg-transparent" rows="2" 
@@ -33,7 +32,6 @@
              class="avatar"
              onerror="this.src='https://ui-avatars.com/api/?name={{ post[4] }}&background=random&color=fff&size=128&bold=true';">
     </a>
-    
     <div class="w-100">
         <div class="d-flex justify-content-between align-items-start mb-2">
             <div>
@@ -48,7 +46,7 @@
             {% endif %}
         </div>
         
-        <p class="mb-3" style="white-space: pre-wrap;">{{ post[1] }}</p>
+        <p class="mb-3" style="white-space: pre-wrap;">{{ post[1]|linkify|safe }}</p>
 
         {% if post[10] %}
             {% set count = post[10]|length %}
@@ -106,7 +104,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <p class="mb-0 small text-muted">{{ comment[0] }}</p>
+                            <p class="mb-0 small text-muted">{{ comment[0]|linkify|safe }}</p>
                         </div>
                     </div>
                     {% endfor %}
@@ -118,10 +116,10 @@
                      class="rounded-circle" style="width: 32px; height: 32px;"
                      onerror="this.src='https://ui-avatars.com/api/?name={{ current_user[1] }}&background=random&color=fff&size=64&bold=true';">
                 
-                <div class="input-group">
-                    <input type="text" name="content" class="form-control rounded-pill border-0 bg-main small py-2" 
-                           placeholder="Tulis komentar..." style="background-color: var(--bg-main);" autocomplete="off" required>
-                    <button class="btn btn-link text-accent border-0 p-0 ms-2"><i class="bi bi-send-fill"></i></button>
+                <div class="search-wrapper w-100">
+                    <input type="text" name="content" class="form-control border-0 bg-transparent text-main shadow-none small" 
+                           placeholder="Tulis komentar..." autocomplete="off" required>
+                    <button class="btn-send pe-3"><i class="bi bi-send-fill"></i></button>
                 </div>
             </form>
         </div>

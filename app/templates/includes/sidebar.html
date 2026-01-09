@@ -14,8 +14,9 @@
             <a href="{{ url_for('main.chat_list') }}" class="nav-link-custom {{ 'active' if 'chat' in request.endpoint else '' }}">
                 <i class="bi bi-chat-dots-fill me-3"></i> <span>Pesan</span>
             </a>
-            <a href="{{ url_for('main.profile', username=session['username']) }}" class="nav-link-custom {{ 'active' if request.endpoint == 'main.profile' else '' }}">
-                <i class="bi bi-person-circle me-3"></i> <span>Profil</span>
+            <a href="{{ url_for('main.profile', username=session['username']) }}" 
+            class="nav-link-custom {{ 'active' if request.endpoint == 'main.profile' and request.view_args.get('username') == session['username'] else '' }}">
+                <i class="bi bi-person me-3 fs-4"></i> <span>Profil</span>
             </a>
             <a href="{{ url_for('main.notifications') }}" class="nav-link-custom {{ 'active' if request.endpoint == 'main.notifications' }}">
                 <i class="bi bi-bell-fill me-3"></i> <span>Notifications</span>
