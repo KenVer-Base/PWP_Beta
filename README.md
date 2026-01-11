@@ -13,7 +13,7 @@ Proyek ini berfokus pada interaksi pengguna secara **real-time** (Chat & Notifik
 - **Postingan Multimedia**: Mendukung teks, gambar, dan video
 - **Explore & Following**:
   - *Explore* → semua postingan global  
-  - *Following* → postingan dari user yang diikuti
+  - *Home* → postingan dari user yang diikuti
 - **Hashtag & Mention**: Mendukung format teks kaya (*rich text*) sederhana
 
 ### 2. Interaksi Pengguna (AJAX)
@@ -50,7 +50,7 @@ Proyek ini berfokus pada interaksi pengguna secara **real-time** (Chat & Notifik
 - Bootstrap Icons
 
 ### Database
-- MySQL / MariaDB
+- MySQL 
 
 ---
 
