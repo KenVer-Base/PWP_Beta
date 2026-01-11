@@ -112,7 +112,7 @@ http://127.0.0.1:5000
 
 ## 👤 Author
 
-**Faqih Alver**  
+**Faqih Al Bashori**  
 Mahasiswa Informatika  
 Universitas Teknologi Yogyakarta (2024)
 
