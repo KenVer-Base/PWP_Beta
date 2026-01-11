@@ -120,10 +120,9 @@ http://127.0.0.1:5000
 ## 👤 Author
 
 <<<<<<< HEAD
-**Faqih Alver**  
+**Faqih Al Bashori**  
 =======
 **Faqih Al Bashori**  
->>>>>>> 9a3fbd0ca542d2feede7902ffc6dad5d0d8c2d28
 Mahasiswa Informatika  
 Universitas Teknologi Yogyakarta (2024)
 
