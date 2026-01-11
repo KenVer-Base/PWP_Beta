@@ -17,7 +17,6 @@ Proyek ini berfokus pada interaksi pengguna secara **real-time** (Chat & Notifik
   - *Following* → postingan dari user yang diikuti
 =======
   - *Home* → postingan dari user yang diikuti
->>>>>>> 9a3fbd0ca542d2feede7902ffc6dad5d0d8c2d28
 - **Hashtag & Mention**: Mendukung format teks kaya (*rich text*) sederhana
 
 ### 2. Interaksi Pengguna (AJAX)
