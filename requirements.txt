@@ -1,0 +1,6 @@
+Flask
+Flask-MySQLdb
+Flask-SocketIO
+eventlet
+python-dotenv
+email-validator
